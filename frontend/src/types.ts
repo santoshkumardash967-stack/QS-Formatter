@@ -8,6 +8,8 @@ export interface Option {
   label: string;
   english_text: string;
   hindi_text: string;
+  needs_image?: boolean;
+  images?: ImageData[];
 }
 
 export interface TableData {
@@ -34,7 +36,9 @@ export type QuestionFlag =
   | 'complex_table'
   | 'unmatched_images'
   | 'low_confidence'
-  | 'count_mismatch';
+  | 'count_mismatch'
+  | 'needs_image'
+  | 'options_need_images';
 
 export interface Question {
   id: number;
@@ -50,6 +54,7 @@ export interface Question {
   grading?: string;
   confidence: number;
   flags: QuestionFlag[];
+  needs_image?: boolean;
   raw_english?: string;
   raw_hindi?: string;
 }

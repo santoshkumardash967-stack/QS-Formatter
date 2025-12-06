@@ -124,6 +124,22 @@ class QuestionAligner:
         if confidence < 0.7:
             flags.append(QuestionFlag.LOW_CONFIDENCE)
         
+        # Check for needs_image flag from parser
+        needs_image = False
+        if en_q:
+            if en_q.get('needs_image', False):
+                needs_image = True
+                if QuestionFlag.NEEDS_IMAGE not in flags:
+                    flags.append(QuestionFlag.NEEDS_IMAGE)
+            # Add parser flags
+            parser_flags = en_q.get('flags', [])
+            for pf in parser_flags:
+                if pf == 'needs_image' and QuestionFlag.NEEDS_IMAGE not in flags:
+                    flags.append(QuestionFlag.NEEDS_IMAGE)
+                    needs_image = True
+                elif pf == 'options_need_images' and QuestionFlag.OPTIONS_NEED_IMAGES not in flags:
+                    flags.append(QuestionFlag.OPTIONS_NEED_IMAGES)
+        
         return Question(
             id=question_id,
             english_text=english_text,
@@ -134,6 +150,7 @@ class QuestionAligner:
             images=images,
             confidence=confidence,
             flags=flags,
+            needs_image=needs_image,
             raw_english="",
             raw_hindi=""
         )
@@ -152,10 +169,12 @@ class QuestionAligner:
         # Build lookup by label
         # smart_parser uses 'english_text' for option text
         en_by_label = {}
+        en_needs_image = {}
         for opt in en_options:
             label = opt.get('label', '')
             text = opt.get('english_text', opt.get('text', ''))
             en_by_label[label] = text
+            en_needs_image[label] = opt.get('needs_image', False)
         
         hi_by_label = {}
         for opt in hi_options:
@@ -169,11 +188,13 @@ class QuestionAligner:
         for label in all_labels:
             en_text = en_by_label.get(label, '')
             hi_text = hi_by_label.get(label, '')
+            needs_image = en_needs_image.get(label, False)
             
             merged.append(Option(
                 label=label,
                 english_text=en_text,
-                hindi_text=hi_text
+                hindi_text=hi_text,
+                needs_image=needs_image
             ))
         
         return merged

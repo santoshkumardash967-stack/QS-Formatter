@@ -23,6 +23,7 @@ class Option(BaseModel):
     label: str = Field(..., description="Option label (A, B, C, D, etc.)")
     english_text: str = Field(default="", description="English option text")
     hindi_text: str = Field(default="", description="Hindi option text")
+    needs_image: bool = Field(default=False, description="Whether option needs manual image upload")
 
 
 class TableData(BaseModel):
@@ -52,6 +53,8 @@ class QuestionFlag(str, Enum):
     UNMATCHED_IMAGES = "unmatched_images"
     LOW_CONFIDENCE = "low_confidence"
     COUNT_MISMATCH = "count_mismatch"
+    NEEDS_IMAGE = "needs_image"
+    OPTIONS_NEED_IMAGES = "options_need_images"
 
 
 class Question(BaseModel):
@@ -69,6 +72,7 @@ class Question(BaseModel):
     grading: Optional[str] = None
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     flags: List[QuestionFlag] = Field(default_factory=list)
+    needs_image: bool = Field(default=False, description="Whether question needs manual image upload")
     raw_english: Optional[str] = None
     raw_hindi: Optional[str] = None
 

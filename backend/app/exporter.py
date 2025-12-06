@@ -112,29 +112,33 @@ class DOCXExporter:
         for image_data in question.images:
             self._add_image(doc, image_data)
         
-        # Answer line (if present)
-        if question.answer:
-            ans_para = doc.add_paragraph()
-            ans_run = ans_para.add_run(f"Ans. {question.answer}")
-            ans_run.font.name = 'Noto Sans'
-            ans_run.font.size = Pt(11)
+        # Answer line (always show, even if empty)
+        ans_para = doc.add_paragraph()
+        ans_text = f"Ans. {question.answer}" if question.answer else "Ans."
+        ans_run = ans_para.add_run(ans_text)
+        ans_run.font.name = 'Noto Sans'
+        ans_run.font.size = Pt(11)
         
-        # Solution (if present)
-        if question.solution_english:
-            sol_para = doc.add_paragraph()
-            sol_text = f"Sol: {question.solution_english}"
+        # Solution line (always show, even if empty)
+        sol_para = doc.add_paragraph()
+        if question.solution_english or question.solution_hindi:
+            sol_text = f"Sol: {question.solution_english or ''}"
             if question.solution_hindi:
                 sol_text += f"\n({question.solution_hindi})"
-            sol_run = sol_para.add_run(sol_text)
-            sol_run.font.name = 'Noto Sans'
-            sol_run.font.size = Pt(11)
+        else:
+            sol_text = "Sol:"
+        sol_run = sol_para.add_run(sol_text)
+        sol_run.font.name = 'Noto Sans'
+        sol_run.font.size = Pt(11)
+        if question.solution_hindi:
+            self._set_hindi_font(sol_run)
         
-        # Grading (if present)
-        if question.grading:
-            grade_para = doc.add_paragraph()
-            grade_run = grade_para.add_run(f"Grading: {question.grading}")
-            grade_run.font.name = 'Noto Sans'
-            grade_run.font.size = Pt(11)
+        # Grading line (always show, even if empty)
+        grade_para = doc.add_paragraph()
+        grade_text = f"Grading: {question.grading}" if question.grading else "Grading:"
+        grade_run = grade_para.add_run(grade_text)
+        grade_run.font.name = 'Noto Sans'
+        grade_run.font.size = Pt(11)
     
     def _set_hindi_font(self, run):
         """Set Hindi/Devanagari font for a run."""
@@ -266,26 +270,28 @@ class SimpleExporter:
             for img in q.images:
                 self._add_image(doc, img)
             
-            # Answer (if present)
-            if q.answer:
-                p_ans = doc.add_paragraph()
-                run_ans = p_ans.add_run(f"Ans. {q.answer}")
-                self._apply_font(run_ans)
+            # Answer line (always show)
+            p_ans = doc.add_paragraph()
+            ans_text = f"Ans. {q.answer}" if q.answer else "Ans."
+            run_ans = p_ans.add_run(ans_text)
+            self._apply_font(run_ans)
             
-            # Solution (if present)
-            if q.solution_english:
-                p_sol = doc.add_paragraph()
-                sol_text = f"Sol: {q.solution_english}"
+            # Solution line (always show)
+            p_sol = doc.add_paragraph()
+            if q.solution_english or q.solution_hindi:
+                sol_text = f"Sol: {q.solution_english or ''}"
                 if q.solution_hindi:
                     sol_text += f"\n({q.solution_hindi})"
-                run_sol = p_sol.add_run(sol_text)
-                self._apply_font(run_sol)
+            else:
+                sol_text = "Sol:"
+            run_sol = p_sol.add_run(sol_text)
+            self._apply_font(run_sol, hindi=bool(q.solution_hindi))
             
-            # Grading (if present)
-            if q.grading:
-                p_grade = doc.add_paragraph()
-                run_grade = p_grade.add_run(f"Grading: {q.grading}")
-                self._apply_font(run_grade)
+            # Grading line (always show)
+            p_grade = doc.add_paragraph()
+            grade_text = f"Grading: {q.grading}" if q.grading else "Grading:"
+            run_grade = p_grade.add_run(grade_text)
+            self._apply_font(run_grade)
             
             # Two blank lines after each question
             doc.add_paragraph()

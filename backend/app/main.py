@@ -18,7 +18,7 @@ from .models import (
     Job, JobStatus, Question, UploadResponse, PreviewResponse,
     FinalizeRequest, ExportResponse, QuestionUpdate
 )
-from .smart_parser import parse_document
+from .docx_parser import parse_document
 from .aligner import QuestionAligner
 from .exporter import SimpleExporter
 from .assets import ImageProcessor, TableProcessor
@@ -269,6 +269,49 @@ async def get_image(job_id: str, image_id: str):
                     return FileResponse(img.path, media_type=img.content_type)
     
     raise HTTPException(status_code=404, detail="Image not found")
+
+
+@app.post("/jobs/{job_id}/upload-image")
+async def upload_image(job_id: str, file: UploadFile = File(...)):
+    """
+    Upload an image for a question (used when adding new questions manually).
+    """
+    job = get_job(job_id)
+    
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    content_type = file.content_type or 'application/octet-stream'
+    
+    if content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File must be an image (jpeg, png, gif, webp). Got: {content_type}"
+        )
+    
+    # Create images directory for this job
+    job_dir = os.path.join(UPLOAD_DIR, job_id)
+    images_dir = os.path.join(job_dir, "images")
+    os.makedirs(images_dir, exist_ok=True)
+    
+    # Generate unique filename
+    ext = os.path.splitext(file.filename or 'image.png')[1] or '.png'
+    image_id = f"uploaded_{uuid.uuid4().hex[:8]}"
+    filename = f"{image_id}{ext}"
+    file_path = os.path.join(images_dir, filename)
+    
+    # Save file
+    with open(file_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+    
+    # Return image data
+    return {
+        "id": image_id,
+        "filename": filename,
+        "path": file_path,
+        "content_type": content_type,
+        "url": f"/jobs/{job_id}/images/{image_id}"
+    }
 
 
 @app.delete("/jobs/{job_id}")

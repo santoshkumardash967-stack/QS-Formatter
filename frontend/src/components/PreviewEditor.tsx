@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Question, PreviewResponse } from '../types';
 import QuestionCard from './QuestionCard';
+import AddQuestionForm from './AddQuestionForm';
 
 // Detect API URL for Codespaces or local development
 const getApiUrl = () => {
@@ -30,6 +31,7 @@ const PreviewEditor: React.FC<PreviewEditorProps> = ({ jobId, onExport, onBack }
   const [filter, setFilter] = useState<'all' | 'flagged' | 'low-confidence'>('all');
   const [englishCount, setEnglishCount] = useState(0);
   const [hindiCount, setHindiCount] = useState(0);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
     fetchPreview();
@@ -62,6 +64,22 @@ const PreviewEditor: React.FC<PreviewEditorProps> = ({ jobId, onExport, onBack }
     setQuestions(prev =>
       prev.map(q => q.id === updated.id ? updated : q)
     );
+  };
+
+  const handleAddQuestion = (newQuestion: Question) => {
+    setQuestions(prev => [...prev, newQuestion]);
+    setShowAddForm(false);
+    // Expand the newly added question
+    setExpandedId(newQuestion.id);
+  };
+
+  const handleDeleteQuestion = (id: number) => {
+    if (window.confirm(`Are you sure you want to delete question Q${id}?`)) {
+      setQuestions(prev => prev.filter(q => q.id !== id));
+      if (expandedId === id) {
+        setExpandedId(null);
+      }
+    }
   };
 
   const filteredQuestions = questions.filter(q => {
@@ -128,10 +146,29 @@ const PreviewEditor: React.FC<PreviewEditorProps> = ({ jobId, onExport, onBack }
           </button>
         </div>
 
-        <button className="export-btn" onClick={handleExport}>
-          📥 Export DOCX
-        </button>
+        <div className="action-buttons">
+          <button className="add-question-btn" onClick={() => setShowAddForm(true)}>
+            ➕ Add Question
+          </button>
+          <button className="export-btn" onClick={handleExport}>
+            📥 Export DOCX
+          </button>
+        </div>
       </div>
+
+      {/* Add Question Modal */}
+      {showAddForm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <AddQuestionForm
+              jobId={jobId}
+              nextId={questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1}
+              onAdd={handleAddQuestion}
+              onCancel={() => setShowAddForm(false)}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="questions-list">
         {filteredQuestions.length === 0 ? (
@@ -143,7 +180,9 @@ const PreviewEditor: React.FC<PreviewEditorProps> = ({ jobId, onExport, onBack }
             <QuestionCard
               key={q.id}
               question={q}
+              jobId={jobId}
               onUpdate={handleUpdateQuestion}
+              onDelete={() => handleDeleteQuestion(q.id)}
               isExpanded={expandedId === q.id}
               onToggle={() => setExpandedId(expandedId === q.id ? null : q.id)}
             />
