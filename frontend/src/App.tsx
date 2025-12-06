@@ -7,11 +7,11 @@ import './App.css';
 // Detect API URL for Codespaces or local development
 const getApiUrl = () => {
   if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-    // Running in Codespaces - use the forwarded port URL
-    return window.location.origin.replace('5173', '8000');
+    // Running in Codespaces - use regex to replace any frontend port with 8000
+    return window.location.origin.replace(/-\d{4}\./, '-8000.');
   }
   if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
-    return window.location.origin.replace('5173', '8000');
+    return window.location.origin.replace(/-\d{4}\./, '-8000.');
   }
   return 'http://localhost:8000';
 };

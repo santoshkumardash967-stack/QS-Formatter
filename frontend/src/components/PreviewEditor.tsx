@@ -5,17 +5,23 @@ import AddQuestionForm from './AddQuestionForm';
 
 // Detect API URL for Codespaces or local development
 const getApiUrl = () => {
-  if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-    // Running in Codespaces - use the forwarded port URL
-    return window.location.origin.replace('5173', '8000');
-  }
-  if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
-    return window.location.origin.replace('5173', '8000');
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const origin = window.location.origin;
+    
+    // Running in Codespaces (e.g., didactic-capybara-77rqj4gwr443p7g4-5175.app.github.dev)
+    if (hostname.includes('app.github.dev')) {
+      return origin.replace(/-(\d+)\.app\.github\.dev/, '-8000.app.github.dev');
+    }
+    if (hostname.includes('github.dev')) {
+      return origin.replace(/-(\d+)\./, '-8000.');
+    }
   }
   return 'http://localhost:8000';
 };
 
 const API_URL = getApiUrl();
+console.log('PreviewEditor API URL:', API_URL);
 
 interface PreviewEditorProps {
   jobId: string;
